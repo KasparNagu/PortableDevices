@@ -26,7 +26,14 @@ WPD_OBJECT_SIZE.contents.pid = 11;
 WPD_OBJECT_PARENT_ID =  comtypes.pointer(port._tagpropertykey());
 WPD_OBJECT_PARENT_ID.contents.fmtid = comtypes.GUID("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}");
 WPD_OBJECT_PARENT_ID.contents.pid = 3;
+	
+WPD_OBJECT_CONTENT_TYPE = comtypes.pointer(port._tagpropertykey());
+WPD_OBJECT_CONTENT_TYPE.contents.fmtid = comtypes.GUID("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}");
+WPD_OBJECT_CONTENT_TYPE.contents.pid = 7;
 
+WPD_RESOURCE_DEFAULT = comtypes.pointer(port._tagpropertykey());
+WPD_RESOURCE_DEFAULT.contents.fmtid = comtypes.GUID("{E81E79BE-34F0-41BF-B53F-F1A06AE87842}")
+WPD_RESOURCE_DEFAULT.contents.pid = 0; 
 
 class PortableDeviceContent:
     def __init__(self,objectID,content,properties = None,propertiesToRead = None):
@@ -45,14 +52,20 @@ class PortableDeviceContent:
 							  clsctx = comtypes.CLSCTX_INPROC_SERVER,
 							  interface=port.IPortableDeviceKeyCollection);
 	    self.propertiesToRead.Add(WPD_OBJECT_NAME)
+	    self.propertiesToRead.Add(WPD_OBJECT_ORIGINAL_FILE_NAME)
+	    self.propertiesToRead.Add(WPD_OBJECT_CONTENT_TYPE)
     def getName(self):
-            if self.name:
-                return self.name
-            if self.objectID == None:
-                return None
-            global WPD_OBJECT_NAME
-	    self.name = self.properties.GetValues(self.objectID,self.propertiesToRead).GetStringValue(WPD_OBJECT_NAME)
-	    return self.name
+		if self.name:
+			return self.name
+		if self.objectID == None:
+			return None
+		global WPD_OBJECT_NAME,WPD_OBJECT_CONTENT_TYPE,WPD_OBJECT_ORIGINAL_FILE_NAME
+		self.name = self.plain_name = self.properties.GetValues(self.objectID,self.propertiesToRead).GetStringValue(WPD_OBJECT_NAME)
+		self.contentType = str(self.properties.GetValues(self.objectID,self.propertiesToRead).GetGuidValue(WPD_OBJECT_CONTENT_TYPE))
+		if self.contentType != "{27E2E392-A111-48E0-AB0C-E17705A05F85}" and self.contentType != "{99ED0160-17FF-4C44-9D98-1D7A6F941921}":
+				#its not a folder
+				self.name = self.filename = self.properties.GetValues(self.objectID,self.propertiesToRead).GetStringValue(WPD_OBJECT_ORIGINAL_FILE_NAME)
+		return self.name
     def getChildren(self):
         retObjs = []
         enumObjectIDs = self.content.EnumObjects(ctypes.c_ulong(0),
@@ -118,6 +131,27 @@ class PortableDeviceContent:
                 break
         STGC_DEFAULT = 0
         fileStream.Commit(STGC_DEFAULT)
+    def downloadStream(self,outputStream):
+		global WPD_RESOURCE_DEFAULT
+		resources = self.content.Transfer()
+		STGM_READ = ctypes.c_uint(0)
+		optimalTransferSizeBytes = ctypes.pointer(ctypes.c_ulong(0))
+		pFileStream = ctypes.POINTER(port.IStream)();
+		optimalTransferSizeBytes, pFileStream = resources.GetStream(self.objectID,
+			WPD_RESOURCE_DEFAULT,
+			STGM_READ,
+			optimalTransferSizeBytes,
+			pFileStream)
+		blockSize = optimalTransferSizeBytes.contents.value
+		fileStream = pFileStream.value
+		buf = (ctypes.c_ubyte*blockSize)()
+		#make sure all RemoteRead parameters are in
+		while True:
+			buf,len = fileStream.RemoteRead(buf, ctypes.c_ulong(blockSize))
+			if len == 0:
+				break
+			outputStream.write(bytearray(buf))
+		
 class PortableDevice:
     def __init__(self,id):
         self.id = id
@@ -196,7 +230,7 @@ if __name__ == "__main__":
 			if cont:
 				print "%s contains:" % path
 				for l in cont.getChildren():					
-					print "  %s" % l.getName()
+					print ("  %s" % l.getName()).encode("utf8")
 			else:
 				print "%s not found" % path
 				exit(1)
@@ -212,6 +246,21 @@ if __name__ == "__main__":
 		srcFile = open(src,"rb")
 		cont.uploadStream(os.path.basename(src),srcFile,srcSize)
 		srcFile.close()
+	elif len(sys.argv) == 4 and sys.argv[1] == 'get':
+	#copy to target
+		src = sys.argv[2]
+		tgt = sys.argv[3]
+		cont = getContentFromDevicePath(src)
+		if not cont:
+				print "directory %s not found" % tgt
+				exit(1)
+		if tgt == "-":
+			tgtFile = sys.stdout
+		else:
+			tgtFile = open(tgt,"wb")
+		cont.downloadStream(tgtFile)
+		if tgt != "-":
+			tgtFile.close()
 	else:
 		print "usage: %s TODO" % sys.argv[0]
 		exit(1)

@@ -15,7 +15,9 @@ Installation and Usage
  - Don't know if it was just me not understanding the interface or if there is a bug in comtypes, but I had to define some parameters as in-out that were just out parameters. In `_1F001332_1A57_4934_BE31_AFFC99F4EE0A_0_1_0.py` :
   - In `IEnumPortableDeviceObjectIDs`, in function `Next` change the parameter `pObjIDs` to in-out
   - In `IPortableDeviceContent`, in function `CreateObjectWithPropertiesAndData` change the parameter `ppData` to in-out
+  - In `ISequentialStream`, in function `RemoteRead` change the parameters `pv` and `pcbRead` to in-out
 - Now you can:
  - List devices with `PortableDevices.py ls`
  - List directory contents with `PortableDevices.py ls [Device]/directory`
  - Upload files with `PortableDevices.py cp source [Device]/directory`
+ - Download files with `PortableDevices.py get [Device]/directory target`
