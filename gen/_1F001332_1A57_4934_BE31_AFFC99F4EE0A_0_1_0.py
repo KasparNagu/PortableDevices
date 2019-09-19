@@ -58,9 +58,9 @@ class ISequentialStream(comtypes.gen._00020430_0000_0000_C000_000000000046_0_2_0
     _idlflags_ = []
 ISequentialStream._methods_ = [
     COMMETHOD([], HRESULT, 'RemoteRead',
-              ( ['out'], POINTER(c_ubyte), 'pv' ),
+              ( ['in', 'out'], POINTER(c_ubyte), 'pv' ),
               ( ['in'], c_ulong, 'cb' ),
-              ( ['out'], POINTER(c_ulong), 'pcbRead' )),
+              ( ['in', 'out'], POINTER(c_ulong), 'pcbRead' )),
     COMMETHOD([], HRESULT, 'RemoteWrite',
               ( ['in'], POINTER(c_ubyte), 'pv' ),
               ( ['in'], c_ulong, 'cb' ),
@@ -867,7 +867,7 @@ IPortableDeviceContent._methods_ = [
               ( ['in', 'out'], POINTER(WSTRING), 'ppszObjectID' )),
     COMMETHOD([], HRESULT, 'CreateObjectWithPropertiesAndData',
               ( ['in'], POINTER(IPortableDeviceValues), 'pValues' ),
-              ( ['out'], POINTER(POINTER(IStream)), 'ppData' ),
+              ( ['in', 'out'], POINTER(POINTER(IStream)), 'ppData' ),
               ( ['in', 'out'], POINTER(c_ulong), 'pdwOptimalWriteBufferSize' ),
               ( ['in', 'out'], POINTER(WSTRING), 'ppszCookie' )),
     COMMETHOD([], HRESULT, 'Delete',
@@ -1610,7 +1610,7 @@ IPortableDeviceResources._methods_ = [
               ( ['in'], POINTER(_tagpropertykey), 'key' ),
               ( ['in'], c_ulong, 'dwMode' ),
               ( ['in', 'out'], POINTER(c_ulong), 'pdwOptimalBufferSize' ),
-              ( ['out'], POINTER(POINTER(IStream)), 'ppStream' )),
+              ( ['in', 'out'], POINTER(POINTER(IStream)), 'ppStream' )),
     COMMETHOD([], HRESULT, 'Delete',
               ( ['in'], WSTRING, 'pszObjectID' ),
               ( ['in'], POINTER(IPortableDeviceKeyCollection), 'pKeys' )),
@@ -2060,7 +2060,7 @@ assert alignment(tag_inner_PROPVARIANT) == 8, alignment(tag_inner_PROPVARIANT)
 IEnumPortableDeviceObjectIDs._methods_ = [
     COMMETHOD([], HRESULT, 'Next',
               ( ['in'], c_ulong, 'cObjects' ),
-              ( ['out'], POINTER(WSTRING), 'pObjIDs' ),
+              ( ['in', 'out'], POINTER(WSTRING), 'pObjIDs' ),
               ( ['in', 'out'], POINTER(c_ulong), 'pcFetched' )),
     COMMETHOD([], HRESULT, 'Skip',
               ( ['in'], c_ulong, 'cObjects' )),
