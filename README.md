@@ -22,3 +22,8 @@ Installation and Usage
   - List directory contents with `PortableDevices.py ls [Device]/directory`
   - Upload files with `PortableDevices.py cp source [Device]/directory`
   - Download files with `PortableDevices.py get [Device]/directory target`
+
+License
+-------
+
+This software is licensed under the [MIT license](https://en.wikipedia.org/wiki/MIT_License).
